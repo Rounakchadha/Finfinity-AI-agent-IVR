@@ -1,0 +1,68 @@
+{
+    "name": "Finfinity Lead Alert (Email)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "finfinity-lead",
+                "options": {}
+            },
+            "id": "e0fe05db-e867-4fd2-8e65-2b02868c2ea6",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                820,
+                380
+            ],
+            "webhookId": "finfinity-lead"
+        },
+        {
+            "parameters": {
+                "sendTo": "chadharounak@gmail.com",
+                "subject": "={{ $json.body.lead.product_interest }} Enquiry - {{ $json.body.lead.full_name }}",
+                "message": "={{ $json.body.summary }}",
+                "appendAttribution": false,
+                "options": {}
+            },
+            "id": "7dc14c6e-cc78-4eb7-a55e-de3d31b0fc27",
+            "name": "Send Email to RM",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1040,
+                380
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "YOUR_CREDENTIAL_ID",
+                    "name": "SMTP Account"
+                }
+            }
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Send Email to RM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "f0fe1f2a-e867-4fd2-8e65-2b02868c2ea6",
+    "meta": {
+        "templateCredsSetupCompleted": true
+    },
+    "id": "x9h8j7k6",
+    "tags": []
+}

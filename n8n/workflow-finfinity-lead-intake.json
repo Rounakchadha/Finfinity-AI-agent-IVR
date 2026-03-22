@@ -1,0 +1,269 @@
+{
+    "name": "Finfinity Lead Intake",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "finfinity-lead",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "finfinity-lead"
+        },
+        {
+            "parameters": {
+                "values": {
+                    "string": [
+                        {
+                            "name": "lead_id",
+                            "value": "={{ $json.body.lead.id }}"
+                        },
+                        {
+                            "name": "full_name",
+                            "value": "={{ $json.body.lead.full_name }}"
+                        },
+                        {
+                            "name": "phone",
+                            "value": "={{ $json.body.lead.phone }}"
+                        },
+                        {
+                            "name": "city",
+                            "value": "={{ $json.body.lead.city }}"
+                        },
+                        {
+                            "name": "product_interest",
+                            "value": "={{ $json.body.lead.product_interest }}"
+                        },
+                        {
+                            "name": "loan_amount_range",
+                            "value": "={{ $json.body.lead.loan_amount_range }}"
+                        },
+                        {
+                            "name": "timeline",
+                            "value": "={{ $json.body.lead.timeline }}"
+                        },
+                        {
+                            "name": "employment_type",
+                            "value": "={{ $json.body.lead.employment_type }}"
+                        },
+                        {
+                            "name": "monthly_income",
+                            "value": "={{ $json.body.lead.monthly_income }}"
+                        },
+                        {
+                            "name": "callback_time",
+                            "value": "={{ $json.body.lead.callback_time }}"
+                        },
+                        {
+                            "name": "email",
+                            "value": "={{ $json.body.lead.email }}"
+                        },
+                        {
+                            "name": "summary",
+                            "value": "={{ $json.body.summary }}"
+                        },
+                        {
+                            "name": "timestamp",
+                            "value": "={{ $json.body.timestamp }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "set-fields",
+            "name": "Shape Lead Data",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 2,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=http://host.docker.internal:3000/api/leads",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "contentType": "json",
+                "body": "={{ JSON.stringify($json.body.lead) }}",
+                "options": {}
+            },
+            "id": "persist-lead",
+            "name": "Persist Lead to DB",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $node['Shape Lead Data'].json['product_interest'] }}",
+                            "operation": "contains",
+                            "value2": "Home Loan"
+                        }
+                    ]
+                }
+            },
+            "id": "route-by-product",
+            "name": "Route by Product",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "functionCode": "// RM Notify — Home Loan Branch\n// In production: replace this with Slack, WhatsApp, or Email node\nconst lead = $node['Shape Lead Data'].json;\nconsole.log('============================================');\nconsole.log('🏠 HOME LOAN LEAD — Assign to Home Loan RM');\nconsole.log('============================================');\nconsole.log(JSON.stringify(lead, null, 2));\nreturn [{ json: { notified: true, branch: 'home_loan', lead } }];"
+            },
+            "id": "notify-rm-home",
+            "name": "Notify RM — Home Loan",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "functionCode": "// RM Notify — All Other Loans\n// In production: replace this with Slack, WhatsApp, or Email node\nconst lead = $node['Shape Lead Data'].json;\nconsole.log('============================================');\nconsole.log('💼 OTHER LOAN LEAD — Assign to General RM');\nconsole.log(`Product: ${lead.product_interest}`);\nconsole.log('============================================');\nconsole.log(JSON.stringify(lead, null, 2));\nreturn [{ json: { notified: true, branch: 'general', lead } }];"
+            },
+            "id": "notify-rm-other",
+            "name": "Notify RM — Other",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={ \"success\": true, \"message\": \"Lead received and RM notified\", \"lead_id\": \"{{ $node['Shape Lead Data'].json['lead_id'] }}\" }",
+                "options": {}
+            },
+            "id": "respond-webhook",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1340,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Shape Lead Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Shape Lead Data": {
+            "main": [
+                [
+                    {
+                        "node": "Persist Lead to DB",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Persist Lead to DB": {
+            "main": [
+                [
+                    {
+                        "node": "Route by Product",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Route by Product": {
+            "main": [
+                [
+                    {
+                        "node": "Notify RM — Home Loan",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Notify RM — Other",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Notify RM — Home Loan": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Notify RM — Other": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "1",
+    "id": "finfinity-lead-intake",
+    "meta": {
+        "instanceId": "finfinity-voice-agent"
+    },
+    "tags": [
+        "finfinity",
+        "lead-intake",
+        "voice-agent"
+    ]
+}
