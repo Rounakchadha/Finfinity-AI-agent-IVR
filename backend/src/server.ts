@@ -319,6 +319,18 @@ app.get('/api/debug/twilio', async (_req, res) => {
     }
 });
 
+// ── Serve React frontend (production build) ───────────────────
+const FRONTEND_DIST = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(FRONTEND_DIST)) {
+    app.use(express.static(FRONTEND_DIST));
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/twilio') || req.path.startsWith('/health')) {
+            return next();
+        }
+        res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+    });
+}
+
 // ── Health check ─────────────────────────────────────────────
 app.get('/health', (_req, res) => {
     res.json({
