@@ -7,7 +7,7 @@ import {
     X, Mic, Bot, Users, MessageSquare
 } from 'lucide-react';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = '';
 
 interface TranscriptMsg {
     role: 'user' | 'assistant';
