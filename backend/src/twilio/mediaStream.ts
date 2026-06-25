@@ -161,12 +161,12 @@ export function handleMediaStream(ws: WebSocket, params: URLSearchParams) {
             case 'stop':
                 if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
                 flush();
-                console.log(`[STREAM] Stopped — participant: ${participant}`);
+                console.log(`[STREAM] Stopped — participant: ${participantParam}`);
                 break;
         }
     });
 
-    ws.on('error', (err: Error) => console.error(`[STREAM] WS error (${participant}):`, err.message));
+    ws.on('error', (err: Error) => console.error(`[STREAM] WS error (${participantParam}):`, err.message));
 
     ws.on('close', () => {
         if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
